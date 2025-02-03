@@ -196,13 +196,11 @@ public class Login extends javax.swing.JFrame {
 
     private void userFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_userFocusLost
         // TODO add your handling code here:
-        user.setText("");
+
     }//GEN-LAST:event_userFocusLost
 
     private void passFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_passFocusLost
         // TODO add your handling code here:]
-        pass.setText("");
-
     }//GEN-LAST:event_passFocusLost
 
     /**
