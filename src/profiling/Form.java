@@ -10,6 +10,12 @@ package profiling;
  */
 import java.sql.*;
 import javax.swing.table.DefaultTableModel;
+import java.io.File;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.Image;
+import javax.swing.JOptionPane;
 public class Form extends javax.swing.JFrame {
 
     /**
@@ -53,6 +59,75 @@ public class Form extends javax.swing.JFrame {
             }
         }
     }
+    
+    private void addStudentActionPerformed(java.awt.event.ActionEvent evt) {
+    // Retrieve form data
+    // Retrieve form data
+    String firstName = fname.getText();
+    String middleName = jTextField2.getText();
+    String lastName = jTextField3.getText();
+    String suffix = jTextField4.getText();
+
+    // Get birthdate as string
+    java.util.Date birthdate = jDateChooser1.getDate();
+    String birthdateStr = birthdate != null ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(birthdate) : "";
+
+    String gender = jRadioButton1.isSelected() ? "Male" : "Female";
+    String course = (String) jComboBox1.getSelectedItem();
+    String section = (String) jComboBox2.getSelectedItem();
+
+    // Retrieve image path from JLabel
+    String imagePath = img.getName(); // img is your JLabel
+
+    // Call the insertStudent method
+    boolean isInserted = Methods.insertStudent(firstName, middleName, lastName, suffix, birthdateStr, gender, course, section, imagePath);
+    
+    if (isInserted) {
+        JOptionPane.showMessageDialog(this, "Student added successfully!");
+        refreshTable(); // Refresh table after adding
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to add student.");
+    }
+}
+    private void refreshTable() {
+    try {
+        Connection conn = Methods.opensDB();
+        String sql = "SELECT * FROM student";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+        
+        // Clear the table before adding new data
+        DefaultTableModel model = (DefaultTableModel) tableStudent.getModel();
+        model.setRowCount(0);
+
+        while (rs.next()) {
+            // Fetch data from ResultSet
+            String id = rs.getString("id");
+            String fname = rs.getString("fname");
+            String mname = rs.getString("mname");
+            String lname = rs.getString("lname");
+            String suffix = rs.getString("suffix");
+            String birthdate = rs.getString("birthdate");
+            String gender = rs.getString("gender");
+            String course = rs.getString("course");
+            String section = rs.getString("ssection");
+            String imgPath = rs.getString("img"); // Image path stored in DB
+            
+            // Add row to table
+            model.addRow(new Object[]{id, fname, mname, lname, suffix, birthdate, gender, course, section, imgPath});
+        }
+
+        Methods.closeDB();
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error refreshing table: " + e.getMessage());
+    }
+}
+
+
+
+    
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -64,7 +139,7 @@ public class Form extends javax.swing.JFrame {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
+        img = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
@@ -91,7 +166,7 @@ public class Form extends javax.swing.JFrame {
         setPreferredSize(new java.awt.Dimension(1170, 500));
         setResizable(false);
 
-        jLabel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 2));
+        img.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 2));
 
         jLabel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
@@ -189,6 +264,11 @@ public class Form extends javax.swing.JFrame {
         jLabel7.setText("Course");
 
         jButton2.setText("ADD");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setText("UPDATE");
 
@@ -256,7 +336,7 @@ public class Form extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(63, 63, 63)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(img, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(77, 77, 77)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -274,7 +354,7 @@ public class Form extends javax.swing.JFrame {
                         .addGap(25, 25, 25)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(img, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jButton1)
@@ -336,7 +416,49 @@ public class Form extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        System.out.println("hee");
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setDialogTitle("Select an Image");
+    fileChooser.setFileFilter(new FileNameExtensionFilter("Image Files", "jpg", "png", "jpeg"));
+
+    int result = fileChooser.showOpenDialog(this); // Show file dialog
+
+    if (result == JFileChooser.APPROVE_OPTION) {
+        File selectedFile = fileChooser.getSelectedFile();
+        String imagePath = selectedFile.getAbsolutePath();
+
+        // Ensure `profiling/assets` folder exists
+        File assetsFolder = new File("profiling/assets/");
+        if (!assetsFolder.exists()) {
+            assetsFolder.mkdirs(); // Creates `profiling` and `assets`
+        }
+        
+        // Define the new image path in `profiling/assets/`
+        File destinationFile = new File("profiling/assets/" + selectedFile.getName());
+
+        // Delete existing image to prevent errors
+        if (destinationFile.exists()) {
+            destinationFile.delete();
+        }
+
+        try {
+            // Copy the selected image to `profiling/assets/`
+            java.nio.file.Files.copy(selectedFile.toPath(), destinationFile.toPath(), 
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error saving image: " + e.getMessage());
+            return;
+        }
+
+        // Display the image in JLabel
+        ImageIcon imageIcon = new ImageIcon(destinationFile.getAbsolutePath());
+        int width = img.getWidth() > 0 ? img.getWidth() : 150;  // Default width
+        int height = img.getHeight() > 0 ? img.getHeight() : 150;  // Default height
+        Image scaledImage = imageIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        img.setIcon(new ImageIcon(scaledImage));
+
+        // Store the image path in the JLabel's name attribute (for retrieval later)
+        img.setName(destinationFile.getAbsolutePath());
+    }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void fnameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fnameActionPerformed
@@ -382,6 +504,11 @@ public class Form extends javax.swing.JFrame {
 
     }//GEN-LAST:event_fnameFocusLost
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        addStudentActionPerformed(evt);
+    }//GEN-LAST:event_jButton2ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -419,6 +546,7 @@ public class Form extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField fname;
+    private javax.swing.JLabel img;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
@@ -426,7 +554,6 @@ public class Form extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private com.toedter.calendar.JDateChooser jDateChooser1;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
